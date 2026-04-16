@@ -1,0 +1,148 @@
+<!-- =============================================================================
+     File: product-form.component.html
+     Purpose: Template for the product add/edit form with inline validation messages.
+     ============================================================================= -->
+
+<div class="form-page">
+
+  <div class="page-header">
+    <a routerLink="/products" class="back-link">← Back to Products</a>
+    <h1>{{ pageTitle }}</h1>
+  </div>
+
+  <app-loading-spinner [loading]="loading"></app-loading-spinner>
+
+  @if (!loading) {
+    <div class="form-card">
+
+      @if (error) {
+        <div class="error-banner">{{ error }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+        <!-- Name -->
+        <div class="form-group">
+          <label for="name">Product Name *</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            class="form-control"
+            [class.is-invalid]="nameControl?.invalid && nameControl?.touched"
+            placeholder="e.g. Laptop Pro 15">
+          @if (nameControl?.touched && nameControl?.errors) {
+            <div class="invalid-feedback">
+              @if (nameControl?.errors?.['required']) { Name is required. }
+              @if (nameControl?.errors?.['maxlength']) { Name must not exceed 200 characters. }
+            </div>
+          }
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            class="form-control"
+            [class.is-invalid]="descriptionControl?.invalid && descriptionControl?.touched"
+            placeholder="Product description..."
+            rows="3">
+          </textarea>
+          @if (descriptionControl?.touched && descriptionControl?.errors?.['maxlength']) {
+            <div class="invalid-feedback">Description must not exceed 2000 characters.</div>
+          }
+        </div>
+
+        <!-- SKU and Category (side by side) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sku">SKU *</label>
+            <input
+              id="sku"
+              type="text"
+              formControlName="sku"
+              class="form-control"
+              [class.is-invalid]="skuControl?.invalid && skuControl?.touched"
+              placeholder="e.g. ELEC-LP15">
+            @if (skuControl?.touched && skuControl?.errors) {
+              <div class="invalid-feedback">
+                @if (skuControl?.errors?.['required']) { SKU is required. }
+                @if (skuControl?.errors?.['minlength']) { SKU must be at least 2 characters. }
+                @if (skuControl?.errors?.['maxlength']) { SKU must not exceed 50 characters. }
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="categoryId">Category *</label>
+            <select
+              id="categoryId"
+              formControlName="categoryId"
+              class="form-control"
+              [class.is-invalid]="categoryIdControl?.invalid && categoryIdControl?.touched">
+              <option [ngValue]="null">Select a category</option>
+              @for (category of categories; track category.id) {
+                <option [ngValue]="category.id">{{ category.name }}</option>
+              }
+            </select>
+            @if (categoryIdControl?.touched && categoryIdControl?.errors?.['required']) {
+              <div class="invalid-feedback">Category is required.</div>
+            }
+          </div>
+        </div>
+
+        <!-- Price and Quantity (side by side) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="price">Price *</label>
+            <div class="input-prefix">
+              <span class="prefix">$</span>
+              <input
+                id="price"
+                type="number"
+                formControlName="price"
+                class="form-control with-prefix"
+                [class.is-invalid]="priceControl?.invalid && priceControl?.touched"
+                min="0"
+                step="0.01">
+            </div>
+            @if (priceControl?.touched && priceControl?.errors) {
+              <div class="invalid-feedback">
+                @if (priceControl?.errors?.['required']) { Price is required. }
+                @if (priceControl?.errors?.['min']) { Price must be 0 or greater. }
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="quantity">Quantity *</label>
+            <input
+              id="quantity"
+              type="number"
+              formControlName="quantity"
+              class="form-control"
+              [class.is-invalid]="quantityControl?.invalid && quantityControl?.touched"
+              min="0">
+            @if (quantityControl?.touched && quantityControl?.errors) {
+              <div class="invalid-feedback">
+                @if (quantityControl?.errors?.['required']) { Quantity is required. }
+                @if (quantityControl?.errors?.['min']) { Quantity must be 0 or greater. }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <a routerLink="/products" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            {{ submitting ? 'Saving...' : (isEditMode ? 'Update Product' : 'Create Product') }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  }
+</div>

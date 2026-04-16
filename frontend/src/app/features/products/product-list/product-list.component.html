@@ -1,0 +1,125 @@
+<!-- =============================================================================
+     File: product-list.component.html
+     Purpose: Template for the product listing page.
+             Shows search, filters, table/grid, pagination, and CRUD actions.
+     ============================================================================= -->
+
+<div class="product-list-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1>Products</h1>
+    <a routerLink="/products/new" class="btn btn-primary">+ Add Product</a>
+  </div>
+
+  <!-- Search and Filter Bar -->
+  <div class="controls-bar">
+    <app-search-bar
+      placeholder="Search products..."
+      (searchChange)="onSearch($event)"
+      class="search-wrapper">
+    </app-search-bar>
+
+    <app-category-filter
+      (categoryChange)="onCategoryChange($event)">
+    </app-category-filter>
+  </div>
+
+  <!-- Loading Spinner -->
+  <app-loading-spinner [loading]="loading"></app-loading-spinner>
+
+  <!-- Error Message -->
+  @if (error && !loading) {
+    <div class="error-banner">
+      <strong>Error:</strong> {{ error }}
+    </div>
+  }
+
+  <!-- Products Table -->
+  @if (!loading && !error) {
+    @if (products.length === 0) {
+      <div class="empty-state">
+        <p>No products found. Try adjusting your search or filters.</p>
+        <a routerLink="/products/new" class="btn btn-primary">Add your first product</a>
+      </div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>SKU</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of products; track product.id) {
+              <tr>
+                <td class="product-name">{{ product.name }}</td>
+                <td class="product-sku"><code>{{ product.sku }}</code></td>
+                <td>{{ product.categoryName ?? '—' }}</td>
+                <td class="product-price">{{ product.price | number: '1.2-2' }}</td>
+                <td class="product-qty">{{ product.quantity }}</td>
+                <td>
+                  <span class="badge" [class.badge-success]="product.quantity > 0" [class.badge-danger]="product.quantity === 0">
+                    {{ product.quantity > 0 ? 'In Stock' : 'Out of Stock' }}
+                  </span>
+                </td>
+                <td class="actions-cell">
+                  <button class="btn btn-sm btn-secondary" (click)="editProduct(product.id)">Edit</button>
+                  <button class="btn btn-sm btn-danger" (click)="confirmDelete(product)">Delete</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (pagedResult && pagedResult.totalPages > 1) {
+        <div class="pagination">
+          <button
+            class="btn btn-sm btn-secondary"
+            [disabled]="!pagedResult.hasPreviousPage"
+            (click)="goToPage(currentPage - 1)">
+            Previous
+          </button>
+
+          @for (page of pageNumbers; track page) {
+            <button
+              class="btn btn-sm"
+              [class.btn-primary]="page === currentPage"
+              [class.btn-secondary]="page !== currentPage"
+              (click)="goToPage(page)">
+              {{ page }}
+            </button>
+          }
+
+          <button
+            class="btn btn-sm btn-secondary"
+            [disabled]="!pagedResult.hasNextPage"
+            (click)="goToPage(currentPage + 1)">
+            Next
+          </button>
+
+          <span class="pagination-info">
+            Showing {{ products.length }} of {{ pagedResult.totalCount }} products
+          </span>
+        </div>
+      }
+    }
+  }
+
+  <!-- Delete Confirmation Dialog -->
+  <app-confirm-dialog
+    [visible]="showDeleteConfirm"
+    [message]="'Are you sure you want to delete ' + deleteTargetName + '? This action cannot be undone.'"
+    (confirmed)="onDeleteConfirmed()"
+    (cancelled)="onDeleteCancelled()">
+  </app-confirm-dialog>
+
+</div>

@@ -1,0 +1,32 @@
+<!-- Navigation Bar -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <span class="brand-icon">📦</span>
+    <span class="brand-name">Product Catalog</span>
+  </div>
+  <ul class="navbar-links">
+    <li><a routerLink="/products" routerLinkActive="active">Products</a></li>
+    <li><a routerLink="/categories" routerLinkActive="active">Categories</a></li>
+  </ul>
+</nav>
+
+<!-- Main Content Area -->
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
+
+<!-- Toast Notifications -->
+@if (notifications$ | async; as notifications) {
+  <div class="notifications-container">
+    @for (notification of notifications; track notification.id) {
+      <div class="toast"
+        [class.toast-success]="notification.type === 'success'"
+        [class.toast-error]="notification.type === 'error'"
+        [class.toast-info]="notification.type === 'info'"
+        role="alert">
+        <span class="toast-message">{{ notification.message }}</span>
+        <button class="toast-close" (click)="dismissNotification(notification.id)" aria-label="Dismiss">&#x2715;</button>
+      </div>
+    }
+  </div>
+}

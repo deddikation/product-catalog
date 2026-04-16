@@ -1,0 +1,103 @@
+<!-- =============================================================================
+     File: category-management.component.html
+     Purpose: Template for category management with tree view and add form.
+     ============================================================================= -->
+
+<div class="category-page">
+
+  <div class="page-header">
+    <h1>Category Management</h1>
+  </div>
+
+  <div class="category-layout">
+
+    <!-- Category Tree -->
+    <div class="card tree-card">
+      <h2>Category Hierarchy</h2>
+      <app-loading-spinner [loading]="loading"></app-loading-spinner>
+
+      @if (!loading) {
+        @if (categoryTree.length === 0) {
+          <p class="empty-state">No categories yet. Create one below.</p>
+        } @else {
+          <ul class="category-tree">
+            @for (node of categoryTree; track node.id) {
+              <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: node }"></ng-container>
+            }
+          </ul>
+        }
+      }
+    </div>
+
+    <!-- Add Category Form -->
+    <div class="card form-card">
+      <h2>Add Category</h2>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+        <div class="form-group">
+          <label for="name">Name *</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            class="form-control"
+            [class.is-invalid]="nameControl?.invalid && nameControl?.touched"
+            placeholder="Category name">
+          @if (nameControl?.touched && nameControl?.errors) {
+            <div class="invalid-feedback">
+              @if (nameControl?.errors?.['required']) { Name is required. }
+              @if (nameControl?.errors?.['maxlength']) { Name must not exceed 100 characters. }
+            </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            class="form-control"
+            placeholder="Optional description"
+            rows="2">
+          </textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="parentCategoryId">Parent Category</label>
+          <select id="parentCategoryId" formControlName="parentCategoryId" class="form-control">
+            <option [ngValue]="null">None (root category)</option>
+            @for (cat of flatCategories; track cat.id) {
+              <option [ngValue]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" [disabled]="submitting">
+          {{ submitting ? 'Creating...' : 'Create Category' }}
+        </button>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Recursive tree node template -->
+<ng-template #treeNode let-node>
+  <li class="tree-node">
+    <div class="tree-node-content" [style.padding-left.px]="node.depth * 20">
+      <span class="tree-icon">{{ node.childCount > 0 ? '📁' : '📄' }}</span>
+      <span class="tree-name">{{ node.name }}</span>
+      @if (node.childCount > 0) {
+        <span class="tree-count">({{ node.childCount }})</span>
+      }
+    </div>
+    @if (node.subcategories && node.subcategories.length > 0) {
+      <ul class="tree-children">
+        @for (child of node.subcategories; track child.id) {
+          <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child }"></ng-container>
+        }
+      </ul>
+    }
+  </li>
+</ng-template>
