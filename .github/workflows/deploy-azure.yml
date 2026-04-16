@@ -5,8 +5,8 @@
 #           - Frontend → Azure Static Web Apps
 #
 # Required GitHub Secrets:
-#   AZURE_WEBAPP_PUBLISH_PROFILE    — XML from: az webapp deployment list-publishing-profiles
-#                                     --name product-catalog-api-lx --resource-group product-catalog-rg --xml
+#   AZURE_CREDENTIALS               — JSON from: az ad sp create-for-rbac --name "github-product-catalog"
+#                                     --role contributor --scopes /subscriptions/<SUB_ID>/resourceGroups/product-catalog-rg --sdk-auth
 #   AZURE_STATIC_WEB_APPS_API_TOKEN — az staticwebapp secrets list --name product-catalog-ui
 #                                     --resource-group product-catalog-rg --query "properties.apiKey" --output tsv
 #
@@ -106,7 +106,7 @@ jobs:
           path: frontend/dist/frontend/browser/
 
   # ---------------------------------------------------------------------------
-  # Deploy Backend → Azure App Service
+  # Deploy Backend → Azure App Service (via Azure CLI zip deploy)
   # ---------------------------------------------------------------------------
   deploy-backend:
     name: Deploy API to Azure App Service
@@ -123,12 +123,21 @@ jobs:
           name: api-publish
           path: ./publish
 
-      - name: Deploy to Azure App Service
-        uses: azure/webapps-deploy@v3
+      - name: Zip publish output
+        run: cd publish && zip -r ../app.zip .
+
+      - name: Login to Azure
+        uses: azure/login@v2
         with:
-          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./publish
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy zip to Azure App Service
+        run: |
+          az webapp deploy \
+            --name ${{ vars.AZURE_WEBAPP_NAME }} \
+            --resource-group product-catalog-rg \
+            --src-path app.zip \
+            --type zip
 
   # ---------------------------------------------------------------------------
   # Deploy Frontend → Azure Static Web Apps
