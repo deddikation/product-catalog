@@ -1,23 +1,18 @@
 # =============================================================================
 # Workflow: ci.yml
-# Purpose:  Continuous Integration — runs on every push and pull request.
-#           Builds the backend, runs all tests, and builds the Angular frontend.
-#           This must pass before any deployment workflow runs.
+# Purpose:  Continuous Integration — runs on pull requests to main.
+#           On direct pushes to main, the deploy workflow runs instead
+#           (it includes its own build and test steps).
 # =============================================================================
 
 name: CI
 
 on:
-  push:
-    branches: ["main", "develop"]
   pull_request:
     branches: ["main"]
 
 jobs:
 
-  # ---------------------------------------------------------------------------
-  # Backend: Build + Test
-  # ---------------------------------------------------------------------------
   backend:
     name: Backend (.NET 9)
     runs-on: ubuntu-latest
@@ -35,46 +30,18 @@ jobs:
         working-directory: backend
         run: dotnet restore
 
-      - name: Build solution
+      - name: Build
         working-directory: backend
         run: dotnet build --no-restore --configuration Release
 
       - name: Run unit tests
         working-directory: backend
-        run: |
-          dotnet test tests/ProductCatalog.UnitTests/ \
-            --no-build --configuration Release \
-            --logger "trx;LogFileName=unit-results.trx" \
-            --results-directory ./test-results
+        run: dotnet test tests/ProductCatalog.UnitTests/ --no-build --configuration Release
 
       - name: Run integration tests
         working-directory: backend
-        run: |
-          dotnet test tests/ProductCatalog.IntegrationTests/ \
-            --no-build --configuration Release \
-            --logger "trx;LogFileName=integration-results.trx" \
-            --results-directory ./test-results
+        run: dotnet test tests/ProductCatalog.IntegrationTests/ --no-build --configuration Release
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-test-results
-          path: backend/test-results/
-
-      - name: Publish API artifact
-        working-directory: backend/src/ProductCatalog.Api
-        run: dotnet publish --configuration Release --output ./publish
-
-      - name: Upload API artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-publish
-          path: backend/src/ProductCatalog.Api/publish/
-
-  # ---------------------------------------------------------------------------
-  # Frontend: Build + Test
-  # ---------------------------------------------------------------------------
   frontend:
     name: Frontend (Angular 19)
     runs-on: ubuntu-latest
@@ -101,9 +68,3 @@ jobs:
       - name: Build production bundle
         working-directory: frontend
         run: npx ng build --configuration production
-
-      - name: Upload frontend artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist/frontend/browser/
